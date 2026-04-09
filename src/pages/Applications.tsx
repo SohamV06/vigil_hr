@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, Loader2, Users, Eye } from 'lucide-react';
+import { Search, Loader2, Users, Eye, AlertCircle, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 
 const statusColors: Record<string, string> = {
@@ -31,20 +31,20 @@ const statusColors: Record<string, string> = {
 };
 
 export default function Applications() {
-  const { data: applications, isLoading } = useApplications();
-  
+  const { data: applications, isLoading, error, refetch } = useApplications();
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
 
   const filteredApplications = applications?.filter((app) => {
-    const matchesSearch = 
+    const matchesSearch =
       app.full_name.toLowerCase().includes(search.toLowerCase()) ||
       app.email.toLowerCase().includes(search.toLowerCase()) ||
       app.job?.title?.toLowerCase().includes(search.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   }) || [];
 
@@ -81,6 +81,16 @@ export default function Applications() {
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center h-64 text-destructive">
+              <AlertCircle className="h-12 w-12 mb-4 opacity-70" />
+              <p className="text-lg font-medium">Failed to load applications</p>
+              <p className="text-sm text-muted-foreground mb-4">{error.message}</p>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">

@@ -26,10 +26,10 @@ const menuItems = [
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleSignOut = async () => {
-    await signOut();
+    await logout();
     navigate('/auth');
   };
 
@@ -37,12 +37,11 @@ export function AppSidebar() {
     <Sidebar className="border-r-0">
       <SidebarHeader className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary">
-            <Shield className="h-5 w-5 text-sidebar-primary-foreground" />
+          <div className="flex h-16 w-40 items-center justify-center rounded-lg bg-sidebar-primary overflow-hidden">
+            <img src="/Vigil.png" alt="Logo" className="h-full w-full object-contain" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-sidebar-foreground">Vigil Admin</h1>
-            <p className="text-xs text-sidebar-foreground/60">Hiring Platform</p>
+            <h1 className="text-lg font-semibold text-sidebar-foreground">Hiring Platform</h1>
           </div>
         </div>
       </SidebarHeader>
@@ -54,29 +53,33 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => {
-                const isActive = location.pathname === item.url || 
-                  (item.url !== '/dashboard' && location.pathname.startsWith(item.url));
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        end={item.url === '/dashboard'}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                          isActive 
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+              {menuItems
+                .filter(item => {
+                  if (!user?.permissions) return true;
+                  return user.permissions.includes(item.title.toLowerCase());
+                })
+                .map((item) => {
+                  const isActive = location.pathname === item.url ||
+                    (item.url !== '/dashboard' && location.pathname.startsWith(item.url));
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          end={item.url === '/dashboard'}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                             : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50'
-                        }`}
-                        activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                      >
-                        <item.icon className="h-5 w-5" />
-                        <span className="font-medium">{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+                            }`}
+                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                        >
+                          <item.icon className="h-5 w-5" />
+                          <span className="font-medium">{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

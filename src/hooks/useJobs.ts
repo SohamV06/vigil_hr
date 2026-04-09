@@ -33,10 +33,13 @@ export function useJobs() {
         .from('jobs')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
+      if (error) throw error;
       if (error) throw error;
       return data as Job[];
     },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -50,7 +53,7 @@ export function useJob(id: string | undefined) {
         .select('*')
         .eq('id', id)
         .single();
-      
+
       if (error) throw error;
       return data as Job;
     },
@@ -69,7 +72,7 @@ export function useCreateJob() {
         .insert([job])
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -95,7 +98,7 @@ export function useUpdateJob() {
         .eq('id', id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -119,7 +122,7 @@ export function useDeleteJob() {
         .from('jobs')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {

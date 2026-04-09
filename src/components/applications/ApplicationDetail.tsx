@@ -94,6 +94,27 @@ export function ApplicationDetail({ application, open, onOpenChange }: Applicati
             </div>
           </div>
 
+          {/* Job Details */}
+          {application.job && (
+            <div className="space-y-3">
+              <h4 className="font-semibold text-foreground">Job Details</h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Department</span>
+                  <p className="font-medium">{application.job.department}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Location</span>
+                  <p className="font-medium">{application.job.location}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Type</span>
+                  <p className="font-medium">{application.job.type}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <Separator />
 
           {/* Resume */}

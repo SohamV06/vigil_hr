@@ -14,7 +14,7 @@ export default function Dashboard() {
   const isLoading = jobsLoading || statsLoading;
 
   return (
-    <DashboardLayout title="Dashboard" subtitle="Welcome to Vigil Admin">
+    <DashboardLayout title="Dashboard" subtitle="Welcome to Hiring Platform">
       <div className="space-y-6 animate-fade-in">
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -57,7 +57,7 @@ export default function Dashboard() {
         {/* Recent Activity Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <RecentApplications />
-          
+
           {/* Quick Stats Card */}
           <div className="space-y-4">
             <div className="bg-card rounded-lg p-6 shadow-card">

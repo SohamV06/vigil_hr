@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { z } from 'zod';
+import { getSecurityQuestion } from '@/services/adminAuthService';
 
 const authSchema = z.object({
   email: z.string().trim().email('Please enter a valid email address'),
@@ -15,14 +16,13 @@ const authSchema = z.object({
 });
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const { signIn, signUp, user } = useAuth();
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+
+  const { login, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -37,7 +37,6 @@ export default function Auth() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
 
     // Validate inputs
     const result = authSchema.safeParse({ email, password });
@@ -49,34 +48,43 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await signIn(email, password);
-        if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            setError('Invalid email or password. Please try again.');
-          } else if (error.message.includes('Email not confirmed')) {
-            setError('Please verify your email address before signing in.');
-          } else {
-            setError(error.message);
-          }
-        }
-      } else {
-        const { error } = await signUp(email, password);
-        if (error) {
-          if (error.message.includes('User already registered')) {
-            setError('An account with this email already exists. Please sign in instead.');
-          } else {
-            setError(error.message);
-          }
-        } else {
-          setSuccess('Check your email to verify your account before signing in.');
-          setIsLogin(true);
-        }
+      // Use the new login function from AuthContext which calls adminAuthService
+      const { error } = await login(email, password);
+
+      if (error) {
+        setError(error.message || 'Invalid email or password. Please try again.');
       }
+      // If success, the useEffect above will redirect
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Please enter your email address first to reset your password.');
+      return;
+    }
+
+    setForgotPasswordLoading(true);
+    try {
+      const response = await getSecurityQuestion(email);
+      if (response.success) {
+        navigate('/forgot-password', {
+          state: {
+            email,
+            initialQuestion: response.question
+          }
+        });
+      } else {
+        setError(response.message || 'Error identifying admin account.');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    } finally {
+      setForgotPasswordLoading(false);
     }
   };
 
@@ -85,12 +93,11 @@ export default function Auth() {
       <div className="w-full max-w-md animate-fade-in">
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl gradient-primary shadow-lg">
-              <Shield className="h-6 w-6 text-primary-foreground" />
+            <div className="flex h-32 w-80 items-center justify-center rounded-xl shadow-lg overflow-hidden">
+              <img src="/Vigil.png" alt="Logo" className="h-full w-full object-contain" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Vigil Admin</h1>
-              <p className="text-sm text-muted-foreground">Hiring Platform</p>
+              <h1 className="text-2xl font-bold text-foreground">Hiring Platform</h1>
             </div>
           </div>
         </div>
@@ -98,12 +105,10 @@ export default function Auth() {
         <Card className="shadow-card">
           <CardHeader className="text-center">
             <CardTitle className="text-xl">
-              {isLogin ? 'Welcome back' : 'Create an account'}
+              Welcome back
             </CardTitle>
             <CardDescription>
-              {isLogin
-                ? 'Sign in to access your admin dashboard'
-                : 'Enter your details to get started'}
+              Sign in to access your admin dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -112,13 +117,6 @@ export default function Auth() {
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              {success && (
-                <Alert className="border-success/50 bg-success/10">
-                  <AlertCircle className="h-4 w-4 text-success" />
-                  <AlertDescription className="text-success">{success}</AlertDescription>
                 </Alert>
               )}
 
@@ -132,6 +130,17 @@ export default function Auth() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors hover:underline flex items-center gap-1 disabled:opacity-50"
+                    onClick={handleForgotPassword}
+                    disabled={forgotPasswordLoading}
+                  >
+                    {forgotPasswordLoading && <Loader2 className="h-3 w-3 animate-spin" />}
+                    Forgot password?
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -150,29 +159,13 @@ export default function Auth() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isLogin ? 'Signing in...' : 'Creating account...'}
+                    Signing in...
                   </>
                 ) : (
-                  isLogin ? 'Sign In' : 'Create Account'
+                  'Sign In'
                 )}
               </Button>
             </form>
-
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setError('');
-                  setSuccess('');
-                }}
-              >
-                {isLogin
-                  ? "Don't have an account? Sign up"
-                  : 'Already have an account? Sign in'}
-              </button>
-            </div>
           </CardContent>
         </Card>
       </div>

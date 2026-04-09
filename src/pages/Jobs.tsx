@@ -36,7 +36,7 @@ const typeColors: Record<string, string> = {
 
 export default function Jobs() {
   const navigate = useNavigate();
-  const { data: jobs, isLoading } = useJobs();
+  const { data: jobs, isLoading, isError, error } = useJobs();
   const deleteJob = useDeleteJob();
 
   const [search, setSearch] = useState('');
@@ -80,6 +80,11 @@ export default function Jobs() {
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : isError ? (
+            <div className="p-8 text-center text-destructive">
+              <p className="font-semibold">Error loading jobs</p>
+              <p className="text-sm opacity-80">{error?.message}</p>
             </div>
           ) : filteredJobs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
