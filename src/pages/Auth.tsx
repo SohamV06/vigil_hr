@@ -94,7 +94,7 @@ export default function Auth() {
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-3">
             <div className="flex h-32 w-80 items-center justify-center rounded-xl shadow-lg overflow-hidden">
-              <img src="/Vigil.png" alt="Logo" className="h-full w-full object-contain" />
+              <img src="/Logo-01 (1).png" alt="Logo" className="h-full w-full object-contain" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Hiring Platform</h1>

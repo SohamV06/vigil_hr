@@ -139,7 +139,7 @@ export default function Applications() {
                         className="opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Eye className="h-4 w-4 mr-2" />
-                        View
+                        View Resume
                       </Button>
                     </TableCell>
                   </TableRow>

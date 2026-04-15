@@ -16,8 +16,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Mail, Phone, FileText, Download, Calendar } from 'lucide-react';
+import { Mail, Phone, Download, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import { useEffect, useState } from 'react';
 
 interface ApplicationDetailProps {
   application: Application | null;
@@ -36,11 +37,26 @@ const statusColors: Record<string, string> = {
 
 export function ApplicationDetail({ application, open, onOpenChange }: ApplicationDetailProps) {
   const updateStatus = useUpdateApplicationStatus();
+  const [currentStatus, setCurrentStatus] = useState<ApplicationStatus>('New');
+
+  useEffect(() => {
+    if (application?.status) {
+      setCurrentStatus(application.status as ApplicationStatus);
+    }
+  }, [application?.id, application?.status]);
 
   if (!application) return null;
 
   const handleStatusChange = (status: ApplicationStatus) => {
-    updateStatus.mutate({ id: application.id, status });
+    setCurrentStatus(status);
+    updateStatus.mutate(
+      { id: application.id, status },
+      {
+        onError: () => {
+          setCurrentStatus(application.status as ApplicationStatus);
+        },
+      }
+    );
   };
 
   return (
@@ -54,8 +70,8 @@ export function ApplicationDetail({ application, open, onOpenChange }: Applicati
                 Applied for {application.job?.title || 'Unknown Position'}
               </SheetDescription>
             </div>
-            <Badge variant="outline" className={statusColors[application.status] || ''}>
-              {application.status}
+            <Badge variant="outline" className={statusColors[currentStatus] || ''}>
+              {currentStatus}
             </Badge>
           </div>
         </SheetHeader>
@@ -157,7 +173,7 @@ export function ApplicationDetail({ application, open, onOpenChange }: Applicati
           <div className="space-y-4">
             <h4 className="font-semibold text-foreground">Update Status</h4>
             <Select
-              value={application.status}
+              value={currentStatus}
               onValueChange={handleStatusChange}
               disabled={updateStatus.isPending}
             >

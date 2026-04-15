@@ -22,6 +22,9 @@ export interface Application {
 
 export type ApplicationStatus = 'New' | 'Reviewed' | 'Contacted' | 'Rejected';
 
+const normalizeStatus = (status: string | null | undefined) =>
+  (status || '').trim().toLowerCase();
+
 /**
  * Fetch all applications with job data.
  * Because the app uses custom admin auth (anon role), PostgREST can't resolve
@@ -54,6 +57,7 @@ export function useApplications() {
       // Merge job data onto each application
       return (applications || []).map((app) => ({
         ...app,
+        status: app.status || 'New',
         job: jobMap.get(app.job_id) || undefined,
       })) as Application[];
     },
@@ -86,6 +90,7 @@ export function useApplication(id: string | undefined) {
 
       return {
         ...app,
+        status: app.status || 'New',
         job: job ? { title: job.title, department: job.department, location: job.location, type: job.type } : undefined,
       } as Application;
     },
@@ -112,6 +117,7 @@ export function useUpdateApplicationStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['application-stats'] });
       toast({ title: 'Success', description: 'Application status updated' });
     },
     onError: (error) => {
@@ -131,15 +137,22 @@ export function useApplicationStats() {
 
       if (error) throw error;
 
-      const total = applications.length;
-      const newCount = applications.filter(a => a.status === 'New').length;
+      const safeApplications = applications || [];
+      const total = safeApplications.length;
+      const newCount = safeApplications.filter((a) => normalizeStatus(a.status) === 'new').length;
 
-      // Recent applications (last 7 days)
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const recent = applications.filter(
-        a => new Date(a.submitted_at) >= weekAgo
-      ).length;
+      // Count records in the current calendar week.
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setHours(0, 0, 0, 0);
+      const day = startOfWeek.getDay();
+      const diffToMonday = day === 0 ? 6 : day - 1;
+      startOfWeek.setDate(startOfWeek.getDate() - diffToMonday);
+
+      const recent = safeApplications.filter((a) => {
+        const submittedAt = new Date(a.submitted_at);
+        return Number.isFinite(submittedAt.getTime()) && submittedAt >= startOfWeek;
+      }).length;
 
       return { total, newCount, recent };
     },

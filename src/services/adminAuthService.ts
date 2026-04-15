@@ -128,6 +128,28 @@ export const resetPassword = async (email: string, answer: string, newPassword: 
 };
 
 /**
+ * Change password using current password verification
+ */
+export const changeAdminPassword = async (
+  email: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const { data, error } = await supabase.rpc('change_admin_password' as any, {
+      input_email: email,
+      input_current_password: currentPassword,
+      input_new_password: newPassword,
+    });
+
+    if (error) return { success: false, message: error.message };
+    return data as unknown as { success: boolean; message: string };
+  } catch (err: any) {
+    return { success: false, message: err.message || 'An error occurred' };
+  }
+};
+
+/**
  * Update security question and answer
  */
 export const updateAdminSecurity = async (adminId: string, question: string, answer: string): Promise<{ success: boolean; message: string }> => {

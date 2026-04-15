@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ const SECURITY_QUESTIONS = [
 
 export default function Settings() {
   const { user } = useAuth();
+  const canManageUsers = user?.permissions?.includes('settings') ?? true;
 
   return (
     <DashboardLayout title="Settings" subtitle="Manage your account settings">
@@ -57,24 +58,28 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5" />
-              Manage Users
-            </CardTitle>
-            <CardDescription>
-              Add new admin users to the portal
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AddAdminForm currentUserEmail={user?.email || ''} />
-            <div className="mt-8 pt-8 border-t">
-              <h3 className="text-lg font-medium mb-4">Existing Users</h3>
-              <AdminUsersList currentUserEmail={user?.email || ''} />
-            </div>
-          </CardContent>
-        </Card>
+        <AccountSecurityForm userId={user?.id || ''} userEmail={user?.email || ''} />
+
+        {canManageUsers && (
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5" />
+                Manage Users
+              </CardTitle>
+              <CardDescription>
+                Add new admin users to the portal
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AddAdminForm currentUserEmail={user?.email || ''} />
+              <div className="mt-8 pt-8 border-t">
+                <h3 className="text-lg font-medium mb-4">Existing Users</h3>
+                <AdminUsersList currentUserEmail={user?.email || ''} />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* ... (existing About card) ... */}
 
@@ -98,6 +103,205 @@ export default function Settings() {
   );
 }
 
+function AccountSecurityForm({ userId, userEmail }: { userId: string; userEmail: string }) {
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [securityQuestion, setSecurityQuestion] = useState(SECURITY_QUESTIONS[0]);
+  const [securityAnswer, setSecurityAnswer] = useState('');
+
+  const [passwordStatus, setPasswordStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [passwordMessage, setPasswordMessage] = useState('');
+  const [securityStatus, setSecurityStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [securityMessage, setSecurityMessage] = useState('');
+
+  useEffect(() => {
+    if (!userEmail) return;
+    const loadCurrentQuestion = async () => {
+      const { getSecurityQuestion } = await import('@/services/adminAuthService');
+      const response = await getSecurityQuestion(userEmail);
+      if (response.success && response.question) {
+        setSecurityQuestion(response.question);
+      }
+    };
+    void loadCurrentQuestion();
+  }, [userEmail]);
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordStatus('loading');
+    setPasswordMessage('');
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if (!passwordRegex.test(passwordForm.newPassword)) {
+      setPasswordStatus('error');
+      setPasswordMessage('Password must be at least 8 characters and include uppercase, lowercase, number, and special character.');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordStatus('error');
+      setPasswordMessage('New password and confirm password do not match.');
+      return;
+    }
+
+    try {
+      const { changeAdminPassword } = await import('@/services/adminAuthService');
+      const response = await changeAdminPassword(userEmail, passwordForm.currentPassword, passwordForm.newPassword);
+
+      if (response.success) {
+        setPasswordStatus('success');
+        setPasswordMessage(response.message);
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        setPasswordStatus('error');
+        setPasswordMessage(response.message);
+      }
+    } catch {
+      setPasswordStatus('error');
+      setPasswordMessage('Failed to update password. Please try again.');
+    }
+  };
+
+  const handleSecuritySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSecurityStatus('loading');
+    setSecurityMessage('');
+
+    if (!securityAnswer.trim()) {
+      setSecurityStatus('error');
+      setSecurityMessage('Security answer is required.');
+      return;
+    }
+
+    try {
+      const { updateAdminSecurity } = await import('@/services/adminAuthService');
+      const response = await updateAdminSecurity(userId, securityQuestion, securityAnswer.trim());
+
+      if (response.success) {
+        setSecurityStatus('success');
+        setSecurityMessage(response.message);
+        setSecurityAnswer('');
+      } else {
+        setSecurityStatus('error');
+        setSecurityMessage(response.message);
+      }
+    } catch {
+      setSecurityStatus('error');
+      setSecurityMessage('Failed to update security question. Please try again.');
+    }
+  };
+
+  return (
+    <Card className="shadow-card">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Shield className="h-5 w-5" />
+          Account Security
+        </CardTitle>
+        <CardDescription>
+          Update your password and security question after login
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-8">
+        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          <h3 className="font-medium">Change Password</h3>
+          {passwordStatus === 'error' && (
+            <Alert variant="destructive">
+              <AlertDescription>{passwordMessage}</AlertDescription>
+            </Alert>
+          )}
+          {passwordStatus === 'success' && (
+            <Alert>
+              <AlertDescription>{passwordMessage}</AlertDescription>
+            </Alert>
+          )}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={passwordForm.confirmPassword}
+              onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+              required
+            />
+          </div>
+          <Button type="submit" disabled={passwordStatus === 'loading'}>
+            {passwordStatus === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Update Password
+          </Button>
+        </form>
+
+        <form onSubmit={handleSecuritySubmit} className="space-y-4 border-t pt-6">
+          <h3 className="font-medium">Change Security Question</h3>
+          {securityStatus === 'error' && (
+            <Alert variant="destructive">
+              <AlertDescription>{securityMessage}</AlertDescription>
+            </Alert>
+          )}
+          {securityStatus === 'success' && (
+            <Alert>
+              <AlertDescription>{securityMessage}</AlertDescription>
+            </Alert>
+          )}
+          <div className="space-y-3">
+            <Label>Select Security Question</Label>
+            <RadioGroup value={securityQuestion} onValueChange={setSecurityQuestion} className="space-y-2">
+              {SECURITY_QUESTIONS.map((q, i) => (
+                <div key={i} className="flex items-start space-x-3 p-2 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value={q} id={`question-${i}`} className="mt-1" />
+                  <Label htmlFor={`question-${i}`} className="text-sm font-normal cursor-pointer">
+                    {q}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="securityAnswer">Your Answer</Label>
+            <Input
+              id="securityAnswer"
+              value={securityAnswer}
+              onChange={(e) => setSecurityAnswer(e.target.value)}
+              placeholder="Enter your answer"
+              required
+            />
+          </div>
+          <Button type="submit" disabled={securityStatus === 'loading'}>
+            {securityStatus === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Update Security Question
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
 function AddAdminForm({ currentUserEmail }: { currentUserEmail: string }) {
   const [formData, setFormData] = useState({
     newEmail: '',
@@ -110,7 +314,7 @@ function AddAdminForm({ currentUserEmail }: { currentUserEmail: string }) {
     dashboard: true,
     jobs: true,
     applications: true,
-    settings: false
+    settings: true
   });
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -163,7 +367,7 @@ function AddAdminForm({ currentUserEmail }: { currentUserEmail: string }) {
           dashboard: true,
           jobs: true,
           applications: true,
-          settings: false
+          settings: true
         });
       } else {
         setStatus('error');
@@ -263,6 +467,16 @@ function AddAdminForm({ currentUserEmail }: { currentUserEmail: string }) {
             />
             <Label htmlFor="perm-applications" className="font-normal cursor-pointer select-none">Applications</Label>
           </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="perm-settings"
+              checked={permissions.settings}
+              onChange={() => handlePermissionChange('settings')}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary accent-primary"
+            />
+            <Label htmlFor="perm-settings" className="font-normal cursor-pointer select-none">Settings</Label>
+          </div>
 
         </div>
         <p className="text-xs text-muted-foreground">Select the modules this user can access.</p>
@@ -294,7 +508,6 @@ function AddAdminForm({ currentUserEmail }: { currentUserEmail: string }) {
   );
 }
 
-import { useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
 
 function AdminUsersList({ currentUserEmail }: { currentUserEmail: string }) {

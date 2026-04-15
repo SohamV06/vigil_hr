@@ -38,7 +38,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="flex h-16 w-40 items-center justify-center rounded-lg bg-sidebar-primary overflow-hidden">
-            <img src="/Vigil.png" alt="Logo" className="h-full w-full object-contain" />
+            <img src="/Logo-01 (1).png" alt="Logo" className="h-full w-full object-contain" />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-sidebar-foreground">Hiring Platform</h1>
@@ -55,6 +55,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems
                 .filter(item => {
+                  if (item.url === '/settings') return true;
                   if (!user?.permissions) return true;
                   return user.permissions.includes(item.title.toLowerCase());
                 })
