@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Jobs from "./pages/Jobs";
 import JobForm from "./pages/JobForm";
 import Applications from "./pages/Applications";
+import Enquiries from "./pages/Enquiries";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -64,6 +65,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Applications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/enquiries"
+              element={
+                <ProtectedRoute>
+                  <Enquiries />
                 </ProtectedRoute>
               }
             />

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      enquiries: {
+        Row: {
+          email: string
+          full_name: string
+          id: string
+          message: string | null
+          phone: string | null
+          status: string
+          subject: string | null
+          submitted_at: string
+        }
+        Insert: {
+          email: string
+          full_name: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          status?: string
+          subject?: string | null
+          submitted_at?: string
+        }
+        Update: {
+          email?: string
+          full_name?: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          status?: string
+          subject?: string | null
+          submitted_at?: string
+        }
+        Relationships: []
+      }
       job_applications: {
         Row: {
           cover_letter: string | null

@@ -314,6 +314,7 @@ function AddAdminForm({ currentUserEmail }: { currentUserEmail: string }) {
     dashboard: true,
     jobs: true,
     applications: true,
+    enquiries: true,
     settings: true
   });
 
@@ -367,6 +368,7 @@ function AddAdminForm({ currentUserEmail }: { currentUserEmail: string }) {
           dashboard: true,
           jobs: true,
           applications: true,
+          enquiries: true,
           settings: true
         });
       } else {
@@ -466,6 +468,16 @@ function AddAdminForm({ currentUserEmail }: { currentUserEmail: string }) {
               className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary accent-primary"
             />
             <Label htmlFor="perm-applications" className="font-normal cursor-pointer select-none">Applications</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="perm-enquiries"
+              checked={permissions.enquiries}
+              onChange={() => handlePermissionChange('enquiries')}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary accent-primary"
+            />
+            <Label htmlFor="perm-enquiries" className="font-normal cursor-pointer select-none">Enquiries</Label>
           </div>
           <div className="flex items-center space-x-2">
             <input

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Users, Settings, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, Settings, LogOut, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Sidebar,
@@ -20,6 +20,7 @@ const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Jobs', url: '/jobs', icon: Briefcase },
   { title: 'Applications', url: '/applications', icon: Users },
+  { title: 'Enquiries', url: '/enquiries', icon: MessageSquare },
   { title: 'Settings', url: '/settings', icon: Settings },
 ];
 
@@ -55,7 +56,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems
                 .filter(item => {
-                  if (item.url === '/settings') return true;
+                  if (item.url === '/settings' || item.url === '/enquiries') return true;
                   if (!user?.permissions) return true;
                   return user.permissions.includes(item.title.toLowerCase());
                 })
