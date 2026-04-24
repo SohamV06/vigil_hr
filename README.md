@@ -1,73 +1,106 @@
-# Welcome to your Lovable project
+# Vigil HR Hub
 
-## Project info
+Technical documentation for a React + Supabase admin dashboard used to manage jobs, applications, enquiries, and admin authentication workflows.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Project Overview
 
-## How can I edit this code?
+This is a frontend SPA built with Vite, React, TypeScript, Tailwind CSS, and shadcn/ui.
 
-There are several ways of editing your application.
+Core capabilities:
 
-**Use Lovable**
+- Admin authentication and session persistence in local storage.
+- Protected routes for dashboard and management pages.
+- Job CRUD workflows.
+- Application listing and detail views.
+- Enquiry listing and detail views.
+- Dashboard metrics driven by query hooks.
+- Admin account/security actions via Supabase RPC.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Architecture
 
-Changes made via Lovable will be committed automatically to this repo.
+Frontend structure:
 
-**Use your preferred IDE**
+- `src/pages/`: route-level screens (Dashboard, Jobs, Applications, Enquiries, Auth, Settings).
+- `src/components/`: reusable UI and feature components.
+- `src/hooks/`: data access hooks for jobs, applications, and enquiries.
+- `src/contexts/`: auth/session context.
+- `src/services/`: RPC-oriented service layer (admin auth and security actions).
+- `src/integrations/supabase/`: Supabase client initialization.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Routing and auth:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Routes are defined in `src/App.tsx`.
+- Protected routes are wrapped by `ProtectedRoute` and `AuthProvider`.
+- Admin login and account operations are implemented via Supabase RPC functions.
 
-Follow these steps:
+## Tech Stack
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- React 18 + TypeScript
+- Vite 5
+- React Router 6
+- TanStack Query 5
+- Tailwind CSS + shadcn/ui + Radix UI
+- Supabase JavaScript client (`@supabase/supabase-js`)
+- Vitest + Testing Library
+- ESLint 9
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Prerequisites
 
-# Step 3: Install the necessary dependencies.
-npm i
+- Node.js 18+
+- npm 9+ (or compatible package manager)
+- Supabase project (local or hosted)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+## Local Development
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create `.env` in this directory:
+
+```bash
+VITE_SUPABASE_URL=<your-supabase-url>
+VITE_SUPABASE_PUBLISHABLE_KEY=<your-supabase-anon-or-publishable-key>
+```
+
+3. Run the app:
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+4. Open the local Vite URL shown in terminal output (typically `http://localhost:5173`).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Scripts
 
-**Use GitHub Codespaces**
+- `npm run dev`: start dev server
+- `npm run build`: production build
+- `npm run build:dev`: development-mode build
+- `npm run preview`: preview production build locally
+- `npm run lint`: lint source files
+- `npm run test`: run tests once
+- `npm run test:watch`: run tests in watch mode
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Database and Migrations
 
-## What technologies are used for this project?
+Supabase migration files are located at `supabase/migrations/`.
 
-This project is built with:
+The migration set includes:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- Admin auth-related SQL and RPC functions
+- Jobs, applications, and enquiries schema updates
+- Row-level security and policy adjustments
 
-## How can I deploy this project?
+Apply migrations with your standard Supabase workflow (`supabase db push` for local/linked projects, or your CI pipeline process).
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Testing
 
-## Can I connect a custom domain to my Lovable project?
+- Test setup: `src/test/setup.ts`
+- Example spec: `src/test/example.test.ts`
+- Runner: Vitest (`npm run test`)
 
-Yes, you can!
+## Notes
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- This README intentionally focuses on technical implementation details only.
